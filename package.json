@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/utilities": "^3.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "mobile-drag-drop": "^3.0.0-rc.0",
     "react": "^19.2.4",
