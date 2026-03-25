@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { GAME_MODE_DATA } from './gamesData';
+import { polyfill } from 'mobile-drag-drop';
+import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+
+// 모바일 드래그 앤 드롭 폴리필 활성화
+polyfill({
+  dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+});
+
+// iOS Safari 모바일 기기에서의 터치 스크롤 튀는 현상 방지
+window.addEventListener('touchmove', function() {}, {passive: false});
 
 // --- 메인 메뉴 컴포넌트 ---
 function MainMenu({ onSelectMode }) {
@@ -58,7 +68,8 @@ const DropSlot = ({ slot, item, onDrop, onDragStart, onRemove }) => {
            draggable
            onDragStart={(e) => onDragStart(e, 'slot', item, slot.id)}
            onClick={() => onRemove(item, slot.id)}
-           className="absolute inset-0 bg-white rounded-2xl shadow-md border-b-8 border-gray-300 p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:-translate-y-1 transition-transform text-gray-800 z-10"
+           // touch-none 추가하여 모바일 드래그 시 스크롤 현상 방지
+           className="absolute inset-0 bg-white rounded-2xl shadow-md border-b-8 border-gray-300 p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:-translate-y-1 transition-transform text-gray-800 z-10 touch-none"
          >
            <span className={`${isSmall ? 'text-4xl md:text-5xl' : 'text-5xl md:text-6xl'} pointer-events-none mb-2`}>{item.emoji}</span>
            <span className={`${isSmall ? 'text-xs md:text-sm' : 'text-sm md:text-base'} text-center leading-tight word-keep-all pointer-events-none`}>{item.text}</span>
@@ -362,7 +373,8 @@ function GameEngine({ modeData, onBack }) {
                   onDragStart={(e) => handleDragStart(e, 'shuffled', item, null)}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleClickSelect(item)}
-                  className={`bg-white rounded-[1.5rem] shadow-lg border-b-[6px] p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transform transition-all hover:-translate-y-2 hover:shadow-2xl hover:scale-105 z-10 ${
+                  // 모바일 스크롤링 이슈 방지 touch-none
+                  className={`bg-white rounded-[1.5rem] shadow-lg border-b-[6px] p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transform transition-all hover:-translate-y-2 hover:shadow-2xl hover:scale-105 z-10 touch-none ${
                     isSmall ? 'w-24 h-28 md:w-28 md:h-32' : 'w-28 h-36 md:w-36 md:h-44'
                   }`}
                   style={{ borderColor: modeData.color }}
