@@ -64,7 +64,7 @@ const DraggableItem = ({ id, item, sourceSlotId, modeColor, onClick }) => {
     >
       <div className="w-full h-full flex flex-col items-center justify-center" onClick={onClick}>
          <span className={`${isSmall ? 'text-4xl md:text-5xl' : 'text-5xl md:text-6xl'} mb-2 pointer-events-none`}>{item.emoji}</span>
-         <span className={`${isSmall ? 'text-xs md:text-sm' : 'text-sm md:text-base'} text-center leading-tight word-keep-all pointer-events-none text-gray-700 font-bold`}>{item.text}</span>
+         <span className={`${isSmall ? 'text-xs md:text-sm' : 'text-sm md:text-base'} text-center leading-tight word-keep-all pointer-events-none text-gray-700`}>{item.text}</span>
       </div>
     </div>
   );
@@ -346,11 +346,18 @@ function GameEngine({ modeData, onBack }) {
       <div className="min-h-screen flex flex-col items-center py-6 px-4 overflow-y-auto relative font-jalnan" style={{ backgroundColor: '#FDF8E7' }}>
         
         {/* Header Area */}
-        <div className="w-full max-w-5xl flex justify-between items-center z-10 mb-8 sticky top-0 bg-[#FDF8E7]/90 backdrop-blur-sm p-4 rounded-3xl shadow-sm">
-          <button onClick={onBack} className="bg-white px-6 py-3 rounded-full text-gray-700 shadow-md hover:bg-gray-50 flex items-center gap-2 border-b-4 border-gray-200 active:translate-y-1 active:border-b-0 transition-all text-lg">
-            ⬅️ 메뉴로
-          </button>
-          <div className="bg-white px-8 py-3 rounded-[2rem] shadow-lg border-b-[6px]" style={{ borderColor: modeData.color }}>
+        <div className="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center z-10 mb-8 sticky top-0 bg-[#FDF8E7]/90 backdrop-blur-sm p-4 rounded-3xl shadow-sm gap-4">
+          <div className="flex gap-2">
+            <button onClick={onBack} className="bg-white px-4 md:px-6 py-3 rounded-full text-gray-700 shadow-md hover:bg-gray-50 flex items-center gap-2 border-b-4 border-gray-200 active:translate-y-1 active:border-b-0 transition-all text-sm md:text-lg">
+              ⬅️ 메뉴로
+            </button>
+            {currentLevelIndex > 0 && (
+              <button onClick={() => { setCurrentLevelIndex(prev => prev - 1); setGameState('intro'); }} className="bg-white px-4 md:px-6 py-3 rounded-full text-gray-700 shadow-md hover:bg-gray-50 flex items-center gap-2 border-b-4 border-gray-200 active:translate-y-1 active:border-b-0 transition-all text-sm md:text-lg">
+                ⬅️ 이전 단계
+              </button>
+            )}
+          </div>
+          <div className="bg-white px-6 md:px-8 py-2 md:py-3 rounded-[2rem] shadow-lg border-b-[6px]" style={{ borderColor: modeData.color }}>
             <span className="text-xl md:text-3xl" style={{ color: modeData.color }}>{modeData.icon} {modeData.title}</span>
           </div>
         </div>
@@ -414,7 +421,7 @@ function GameEngine({ modeData, onBack }) {
 
                 {gameState === 'success' && (
                   <div className="flex flex-col items-center w-full">
-                    <div className="text-3xl md:text-5xl mb-8 text-center" style={{ color: modeData.color }}>정답이에요! 완벽한 알고리즘이에요! 👏</div>
+                    <div className="text-2xl md:text-3xl mb-8 text-center" style={{ color: modeData.color }}>정답이에요! 완벽한 알고리즘이에요! 👏</div>
                     <button 
                       onClick={() => {
                         if (currentLevelIndex < modeData.levels.length - 1) {

@@ -102,7 +102,7 @@ export const CONDITION_GAMES = [
   {
     id: 3, type: 'condition',
     title: "3단계: 분리수거 ♻️", description: "자원순환! 종이 상자라면 파란 통에, 아니라면 일반 쓰레기통에!",
-    items: [ { id: 'cd3-1', text: "종이 상자다", emoji: "📦", size: 'small' }, { id: 'cd3-2', text: "파란 재활용통", emoji: "🗑️" }, { id: 'cd3-3', text: "일반 쓰레기통", emoji: "🗑️" } ],
+    items: [ { id: 'cd3-1', text: "종이 상자다", emoji: "📦", size: 'small' }, { id: 'cd3-2', text: "파란 재활용통", emoji: "🪣" }, { id: 'cd3-3', text: "일반 쓰레기통", emoji: "🗑️" } ],
     conditionSlot: { id: 's_cond', correctId: 'cd3-1', size: 'small' },
     ifSlots: [ { id: 's_if1', correctId: 'cd3-2' } ],
     elseSlots: [ { id: 's_else1', correctId: 'cd3-3' } ]
