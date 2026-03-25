@@ -1,0 +1,478 @@
+import React, { useState, useEffect } from 'react';
+
+// 반복 알고리즘 게임 데이터 정의 (1~4단계)
+const GAME_LEVELS = [
+  {
+    id: 1,
+    title: "1단계: 도토리 모으기 🐿️",
+    description: "다람쥐가 앞으로 가면서 도토리를 3개 모으려고 해요. 반복 상자를 채워주세요!",
+    slots: [
+      { id: 'num', label: '횟수' },
+      { id: 'act1', label: '반복할 행동' }
+    ],
+    correctAnswers: ['num-3', 'act-acorn'],
+    cards: [
+      { id: 'act-acorn', text: "도토리 줍기", emoji: "🌰" },
+      { id: 'act-sleep', text: "낮잠 자기", emoji: "💤" },
+      { id: 'num-3', text: "3", emoji: "3️⃣" },
+      { id: 'num-5', text: "5", emoji: "5️⃣" }
+    ]
+  },
+  {
+    id: 2,
+    title: "2단계: 운동장 돌기 🏃",
+    description: "네모난 운동장을 한 바퀴 다 돌려면 어떤 행동을 몇 번 반복해야 할까요?",
+    slots: [
+      { id: 'num', label: '횟수' },
+      { id: 'act1', label: '첫 번째 행동' },
+      { id: 'act2', label: '두 번째 행동' }
+    ],
+    correctAnswers: ['num-4', 'act-run', 'act-turn'],
+    cards: [
+      { id: 'num-2', text: "2", emoji: "2️⃣" },
+      { id: 'num-4', text: "4", emoji: "4️⃣" },
+      { id: 'act-run', text: "앞으로 달리기", emoji: "🏃" },
+      { id: 'act-turn', text: "코너 돌기", emoji: "↩️" },
+      { id: 'act-rest', text: "땀 닦기", emoji: "💦" }
+    ]
+  },
+  {
+    id: 3,
+    title: "3단계: 꼼꼼하게 손 씻기 🧼",
+    description: "세균을 완벽하게 없애려면 두 가지 행동을 10번 반복해야 해요!",
+    slots: [
+      { id: 'num', label: '횟수' },
+      { id: 'act1', label: '첫 번째 행동' },
+      { id: 'act2', label: '두 번째 행동' }
+    ],
+    correctAnswers: ['num-10', 'act-soap', 'act-rub'],
+    cards: [
+      { id: 'act-soap', text: "비누칠 하기", emoji: "🧼" },
+      { id: 'act-hair', text: "머리 감기", emoji: "🧴" },
+      { id: 'num-5', text: "5", emoji: "5️⃣" },
+      { id: 'act-rub', text: "손 비비기", emoji: "👏" },
+      { id: 'num-10', text: "10", emoji: "🔟" }
+    ]
+  },
+  {
+    id: 4,
+    title: "4단계: 로봇의 계단 오르기 🤖",
+    description: "5층까지 올라가려면 다리를 올리고 딛는 과정을 몇 번 반복할까요?",
+    slots: [
+      { id: 'num', label: '횟수' },
+      { id: 'act1', label: '첫 번째 행동' },
+      { id: 'act2', label: '두 번째 행동' }
+    ],
+    correctAnswers: ['num-5', 'act-lift', 'act-step'],
+    cards: [
+      { id: 'act-back', text: "뒤로 걷기", emoji: "🚶" },
+      { id: 'act-lift', text: "다리 올리기", emoji: "🦵" },
+      { id: 'num-3', text: "3", emoji: "3️⃣" },
+      { id: 'num-5', text: "5", emoji: "5️⃣" },
+      { id: 'act-step', text: "앞으로 딛기", emoji: "👣" }
+    ]
+  }
+];
+
+export default function App() {
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+  const [gameState, setGameState] = useState('intro'); // 'intro', 'playing', 'checking', 'success', 'fail', 'all_clear'
+  const [shuffledItems, setShuffledItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]); 
+  
+  const currentLevel = GAME_LEVELS[currentLevelIndex];
+
+  // 배열을 무작위로 섞는 함수
+  const shuffleArray = (array) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
+  // 게임 시작 및 레벨 초기화
+  const initLevel = () => {
+    setShuffledItems(shuffleArray(currentLevel.cards));
+    // 슬롯(빈칸) 개수만큼 null 로 초기화
+    setSelectedItems(new Array(currentLevel.slots.length).fill(null));
+    setGameState('playing');
+  };
+
+  // 성공 효과음 (단계별)
+  const playSuccessSound = () => {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.log('Audio playback blocked:', e));
+  };
+
+  // 모든 단계 클리어 시 폭죽 및 팡파레 효과
+  useEffect(() => {
+    if (gameState === 'all_clear') {
+      const fanfare = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+      fanfare.volume = 0.6;
+      fanfare.play().catch(e => console.log('Audio playback blocked:', e));
+
+      const triggerFireworks = async () => {
+        if (!window.confetti) {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+          script.async = true;
+          document.body.appendChild(script);
+          await new Promise(resolve => { script.onload = resolve; });
+        }
+        
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        const frame = () => {
+          window.confetti({
+            particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
+            colors: ['#FE5A00', '#D51E5B', '#29AEE4', '#2EB85C', '#FDF8E7']
+          });
+          window.confetti({
+            particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
+            colors: ['#FE5A00', '#D51E5B', '#29AEE4', '#2EB85C', '#FDF8E7']
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        };
+        frame();
+      };
+      
+      triggerFireworks();
+    }
+  }, [gameState]);
+
+  // 클릭 이벤트 핸들러
+  const handleClickSelect = (item) => {
+    if (gameState !== 'playing') return;
+    const firstEmptyIndex = selectedItems.findIndex(i => i === null);
+    if (firstEmptyIndex !== -1) {
+      setShuffledItems(prev => prev.filter(i => i.id !== item.id));
+      const newSelected = [...selectedItems];
+      newSelected[firstEmptyIndex] = item;
+      setSelectedItems(newSelected);
+    }
+  };
+
+  const handleClickDeselect = (item, index) => {
+    if (gameState !== 'playing' || !item) return;
+    const newSelected = [...selectedItems];
+    newSelected[index] = null;
+    setSelectedItems(newSelected);
+    setShuffledItems(prev => [...prev, item]);
+  };
+
+  // 드래그 앤 드롭 이벤트 핸들러
+  const handleDragStart = (e, source, item, index) => {
+    if (gameState !== 'playing') {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.setData('source', source); 
+    e.dataTransfer.setData('itemId', item.id);
+    e.dataTransfer.setData('sourceIndex', index);
+    setTimeout(() => { e.target.classList.add('opacity-40'); }, 0);
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.classList.remove('opacity-40');
+  };
+
+  const handleDropOnSlot = (e, targetIndex) => {
+    e.preventDefault();
+    if (gameState !== 'playing') return;
+
+    const source = e.dataTransfer.getData('source');
+    const itemId = e.dataTransfer.getData('itemId');
+    const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex'), 10);
+
+    if (!itemId) return;
+    const item = currentLevel.cards.find(i => i.id === itemId);
+
+    if (source === 'shuffled') {
+      const existingItemInSlot = selectedItems[targetIndex];
+      const newSelected = [...selectedItems];
+      newSelected[targetIndex] = item;
+      setSelectedItems(newSelected);
+
+      setShuffledItems(prev => {
+        let next = prev.filter(i => i.id !== itemId);
+        if (existingItemInSlot) next.push(existingItemInSlot);
+        return next;
+      });
+    } else if (source === 'selected') {
+      const newSelected = [...selectedItems];
+      const itemInTarget = newSelected[targetIndex];
+      newSelected[targetIndex] = newSelected[sourceIndex];
+      newSelected[sourceIndex] = itemInTarget;
+      setSelectedItems(newSelected);
+    }
+  };
+
+  const handleDropOnShuffled = (e) => {
+    e.preventDefault();
+    if (gameState !== 'playing') return;
+
+    const source = e.dataTransfer.getData('source');
+    const itemId = e.dataTransfer.getData('itemId');
+    const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex'), 10);
+
+    if (source === 'selected' && itemId) {
+      const newSelected = [...selectedItems];
+      const item = newSelected[sourceIndex];
+      newSelected[sourceIndex] = null;
+      setSelectedItems(newSelected);
+      setShuffledItems(prev => [...prev, item]);
+    }
+  };
+
+  // 정답 확인 (이번에는 currentLevel.correctAnswers 배열과 비교)
+  const checkAnswer = () => {
+    setGameState('checking');
+    
+    const isCorrect = selectedItems.every((item, index) => item && item.id === currentLevel.correctAnswers[index]);
+
+    setTimeout(() => {
+      if (isCorrect) {
+        playSuccessSound();
+        setGameState('success');
+      } else {
+        setGameState('fail');
+      }
+    }, 800);
+  };
+
+  // 다음 레벨로 이동
+  const nextLevel = () => {
+    if (currentLevelIndex < GAME_LEVELS.length - 1) {
+      setCurrentLevelIndex(prev => prev + 1);
+      setGameState('intro'); 
+    } else {
+      setGameState('all_clear');
+    }
+  };
+
+  // 실패 시 다시하기
+  const retryLevel = () => {
+    initLevel();
+  };
+
+  useEffect(() => {
+    if (gameState === 'intro') {
+      initLevel();
+    }
+  }, [currentLevelIndex, gameState]);
+
+  const isAllSlotsFilled = selectedItems.every(item => item !== null);
+
+  // 슬롯 렌더링 함수
+  const renderSlot = (index, customTitle = null) => {
+    const item = selectedItems[index];
+    const slotLabel = currentLevel.slots[index].label;
+    
+    return (
+      <div 
+        key={`slot-${index}`} 
+        className="w-28 h-36 md:w-36 md:h-44 relative rounded-2xl transition-all z-20"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.add('ring-4', 'ring-white', 'ring-opacity-80', 'scale-105');
+        }}
+        onDragLeave={(e) => {
+          e.currentTarget.classList.remove('ring-4', 'ring-white', 'ring-opacity-80', 'scale-105');
+        }}
+        onDrop={(e) => {
+          e.currentTarget.classList.remove('ring-4', 'ring-white', 'ring-opacity-80', 'scale-105');
+          handleDropOnSlot(e, index);
+        }}
+      >
+        {item ? (
+          <div 
+            draggable
+            onDragStart={(e) => handleDragStart(e, 'selected', item, index)}
+            onDragEnd={handleDragEnd}
+            onClick={() => handleClickDeselect(item, index)}
+            className="absolute inset-0 bg-white rounded-2xl shadow-[0_8px_0_rgba(0,0,0,0.1)] border-4 border-gray-100 p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transform transition-transform hover:-translate-y-2"
+          >
+            <div className="bg-orange-brand text-white px-2 py-1 rounded-full absolute -top-3 text-[10px] shadow-sm whitespace-nowrap">
+              {slotLabel}
+            </div>
+            <span className="text-4xl md:text-5xl mb-2 pointer-events-none">{item.emoji}</span>
+            <span className="text-center text-xs md:text-sm text-gray-800 leading-tight word-keep-all pointer-events-none">
+              {item.text}
+            </span>
+          </div>
+        ) : (
+          <div className="absolute inset-0 rounded-2xl border-4 border-dashed border-white/60 bg-white/20 flex flex-col items-center justify-center text-white transition-colors">
+            <span className="text-sm bg-black/20 px-3 py-1 rounded-full">{slotLabel}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FDF8E7] flex flex-col items-center py-10 px-4 font-jalnan overflow-hidden relative">
+      
+      {/* 폰트 적용을 위한 스타일 */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @font-face {
+            font-family: 'JalnanGothic';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_231029@1.1/JalnanGothic.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        .font-jalnan {
+            font-family: 'JalnanGothic', sans-serif;
+            letter-spacing: -0.02em;
+        }
+        .text-orange-brand { color: #FE5A00; }
+        .bg-pink-brand { background-color: #D51E5B; }
+        .hover-bg-pink-brand:hover { background-color: #b5154b; }
+      `}} />
+
+      <div className="max-w-4xl w-full relative z-10">
+        
+        {/* 헤더 타이틀 */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl md:text-5xl text-orange-brand tracking-tighter leading-none mb-4 drop-shadow-sm">
+            반복 알고리즘
+          </h1>
+          <p className="text-base md:text-lg text-gray-700">마법의 <span className="text-[#29AEE4] font-black">반복 상자</span>를 채워 코드를 줄여보세요!</p>
+        </div>
+
+        {gameState === 'all_clear' ? (
+          <div className="bg-white rounded-[40px] shadow-2xl p-12 text-center border-4 border-[#FE5A00] transition-transform">
+            <div className="text-8xl mb-6">🎉</div>
+            <h2 className="text-5xl text-orange-brand mb-4">모든 단계 완료!</h2>
+            <p className="text-2xl text-gray-700 mb-10">최고의 코딩 마법사가 탄생했어요!</p>
+            <button 
+              onClick={() => { setCurrentLevelIndex(0); setGameState('intro'); }}
+              className="bg-pink-brand hover-bg-pink-brand text-white text-2xl py-4 px-12 rounded-full transition-transform active:scale-95"
+            >
+              다시 도전하기
+            </button>
+          </div>
+        ) : (
+          <div className="bg-white/80 backdrop-blur-sm rounded-[40px] shadow-xl p-6 md:p-10 border-2 border-orange-100">
+            
+            {/* 레벨 정보 */}
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <span className="bg-[#29AEE4] text-white px-4 py-1 rounded-full text-sm mb-2 inline-block shadow-sm">
+                  Level {currentLevelIndex + 1} / {GAME_LEVELS.length}
+                </span>
+                <h2 className="text-2xl md:text-3xl text-gray-900">{currentLevel.title}</h2>
+              </div>
+            </div>
+            
+            <p className="text-gray-600 mb-8">{currentLevel.description}</p>
+
+            {/* 🔁 마법의 반복 상자 UI */}
+            <div className="bg-[#29AEE4] p-6 md:p-8 rounded-[2rem] border-4 border-[#1e3a8a] shadow-[0_10px_0_#1e3a8a] w-full max-w-2xl mx-auto mb-12 relative mt-4">
+              <div className="absolute -top-5 left-8 bg-white text-[#1e3a8a] px-4 py-1 rounded-full border-4 border-[#1e3a8a] font-black shadow-sm">
+                마법의 반복 상자
+              </div>
+              
+              {/* 횟수 영역 (슬롯 0) */}
+              <div className="flex flex-wrap items-center justify-center gap-4 mb-8 mt-2">
+                <span className="text-4xl text-white font-black drop-shadow-md">🔁</span>
+                {renderSlot(0)}
+                <span className="text-2xl md:text-3xl text-white font-black drop-shadow-md">번 반복하기</span>
+              </div>
+              
+              {/* 행동 영역 (슬롯 1~) */}
+              <div className="bg-white/95 p-6 rounded-[1.5rem] border-4 border-[#1e3a8a]/20 flex flex-col items-center shadow-inner">
+                <h3 className="text-[#1e3a8a] text-lg mb-4 bg-blue-50 px-4 py-1 rounded-full">👇 상자 안의 행동을 반복해요 👇</h3>
+                <div className="flex flex-wrap justify-center gap-3 md:gap-6">
+                  {currentLevel.slots.slice(1).map((_, i) => renderSlot(i + 1))}
+                </div>
+              </div>
+            </div>
+
+            {/* 선택할 카드 대기열 */}
+            <div 
+              className="flex flex-wrap justify-center gap-3 md:gap-4 min-h-[12rem] p-4 rounded-3xl transition-colors border-4 border-dashed border-gray-200 bg-gray-50/50"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('bg-gray-100', 'border-gray-300');
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.classList.remove('bg-gray-100', 'border-gray-300');
+              }}
+              onDrop={(e) => {
+                e.currentTarget.classList.remove('bg-gray-100', 'border-gray-300');
+                handleDropOnShuffled(e);
+              }}
+            >
+              <div className="w-full text-center text-gray-400 text-sm mb-2">아래 카드를 상자 안으로 끌어다 놓으세요</div>
+              {shuffledItems.map((item, index) => (
+                <div 
+                  key={item.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, 'shuffled', item, index)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => handleClickSelect(item)}
+                  className="w-28 h-36 md:w-36 md:h-44 bg-white rounded-2xl shadow-[0_6px_0_rgba(0,0,0,0.1)] border-2 border-gray-100 p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transform transition-all hover:-translate-y-2 hover:border-[#29AEE4] hover:shadow-xl"
+                >
+                  <span className="text-4xl md:text-5xl mb-2 pointer-events-none">{item.emoji}</span>
+                  <span className="text-center text-xs md:text-sm text-gray-800 leading-tight word-keep-all pointer-events-none">
+                    {item.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* 상태별 액션 버튼 */}
+            <div className="mt-12 flex justify-center min-h-[4rem]">
+              {isAllSlotsFilled && gameState === 'playing' && (
+                <button 
+                  onClick={checkAnswer}
+                  className="bg-pink-brand hover-bg-pink-brand text-white text-xl md:text-2xl py-4 px-12 rounded-full shadow-lg transition-transform active:scale-95"
+                >
+                  COUNT ME IN! (정답 확인)
+                </button>
+              )}
+
+              {gameState === 'checking' && (
+                <div className="text-2xl text-orange-brand animate-pulse">
+                  알고리즘 검사 중... 💻
+                </div>
+              )}
+
+              {gameState === 'success' && (
+                <div className="flex flex-col items-center animate-pulse">
+                  <div className="text-2xl text-orange-brand mb-4">완벽한 반복 알고리즘이에요! 👏</div>
+                  <button 
+                    onClick={nextLevel}
+                    className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white text-xl py-4 px-12 rounded-full shadow-lg transition-transform active:scale-95 ring-4 ring-blue-200"
+                  >
+                    다음 단계 이동 🚀
+                  </button>
+                </div>
+              )}
+
+              {gameState === 'fail' && (
+                <div className="flex flex-col items-center">
+                  <div className="text-2xl text-pink-brand mb-4">오류 발생! 다시 버그를 잡아볼까요? 🐛</div>
+                  <button 
+                    onClick={retryLevel}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xl py-3 px-10 rounded-full transition-transform active:scale-95"
+                  >
+                    다시 시도하기
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .word-keep-all {
+    word-break: keep-all;
+  }
+}
+
+/* 첨부해주신 레퍼런스 이미지 느낌을 살린 분할된 배경과 뭉게구름 */
+.bg-split-main {
+  background: linear-gradient(to bottom, #4a4542 0%, #4a4542 55%, #eb5e3f 55%, #eb5e3f 100%);
+}
+
+.blob-cloud {
+  border-radius: 60% 40% 50% 50% / 50% 50% 50% 50%;
+  animation: blobBounce 8s infinite alternate ease-in-out;
+}
+
+@keyframes blobBounce {
+  0% { border-radius: 60% 40% 50% 50% / 50% 50% 50% 50%; transform: scale(1); }
+  50% { border-radius: 50% 50% 40% 60% / 60% 60% 50% 40%; transform: scale(1.02); }
+  100% { border-radius: 40% 60% 50% 40% / 50% 40% 60% 60%; transform: scale(1); }
+}
+
+.font-jalnan {
+  font-family: 'JalnanGothic', sans-serif;
+  letter-spacing: -0.02em;
+}
